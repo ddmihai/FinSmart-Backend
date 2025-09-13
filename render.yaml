@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: finsmart-backend
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        value: "<set-in-render-dashboard>"
+      - key: JWT_ACCESS_SECRET
+        value: "<set-in-render-dashboard>"
+      - key: JWT_REFRESH_SECRET
+        value: "<set-in-render-dashboard>"
+      - key: CSRF_SECRET
+        value: "<set-in-render-dashboard>"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        value: "https://finsmart-frontend.onrender.com"
+      - key: AGENDA_ENABLED
+        value: "true"
+

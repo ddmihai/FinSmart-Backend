@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FinSmart API</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 2rem; line-height: 1.5; }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+      .wrap { max-width: 860px; margin: 0 auto; }
+      h1 { margin-bottom: .25rem; }
+      .muted { opacity: .7; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
+      .card { border: 1px solid rgba(127,127,127,.3); border-radius: 8px; padding: 1rem; }
+      a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>FinSmart API</h1>
+      <p class="muted">Your finances at your fingertips</p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Health</h3>
+          <code>GET /health</code>
+        </div>
+        <div class="card">
+          <h3>Auth</h3>
+          <code>POST /api/auth/signup</code><br />
+          <code>POST /api/auth/login</code><br />
+          <code>GET /api/auth/me</code>
+        </div>
+        <div class="card">
+          <h3>Accounts & Cards</h3>
+          <code>GET /api/accounts</code><br />
+          <code>POST /api/accounts</code>
+        </div>
+        <div class="card">
+          <h3>Transactions</h3>
+          <code>POST /api/transactions/income</code><br />
+          <code>POST /api/transactions/expense</code><br />
+          <code>GET /api/transactions</code>
+        </div>
+        <div class="card">
+          <h3>Statements</h3>
+          <code>GET /api/statements</code><br />
+          <code>GET /api/statements/download</code>
+        </div>
+        <div class="card">
+          <h3>Budgets & Analytics</h3>
+          <code>POST /api/budgets</code><br />
+          <code>GET /api/budgets/usage</code><br />
+          <code>GET /api/analytics</code>
+        </div>
+      </div>
+
+      <p class="muted">See <code>backend/README.md</code> for full details.</p>
+    </div>
+  </body>
+  </html>
+
