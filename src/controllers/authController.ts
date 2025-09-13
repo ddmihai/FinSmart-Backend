@@ -73,12 +73,15 @@ export async function refresh(req: Request, res: Response) {
     return res.status(401).json({ error: 'Invalid refresh token' });
   }
 }
+
+
 export async function logout(req: Request, res: Response) {
   const token = req.cookies?.refreshToken;
   if (token) await RefreshToken.deleteOne({ token });
-  res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+  res.clearCookie('refreshToken', { path: '/' });
   res.json({ ok: true });
 }
+
 
 export async function me(req: Request, res: Response) {
   const user = await User.findById(req.userId);
