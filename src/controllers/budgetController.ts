@@ -4,7 +4,10 @@ import { Budget } from '../models/Budget.js';
 
 export async function setBudget(req: Request, res: Response) {
   const { category, limit } = req.body;
-  const b = await upsertBudget(req.userId as any, category, Number(limit));
+  const lim = Number(limit);
+  if (!Number.isFinite(lim) || lim < 0) return res.status(400).json({ error: 'Invalid limit' });
+  if (lim > 100000000) return res.status(400).json({ error: 'Limit exceeds maximum £1,000,000.00' });
+  const b = await upsertBudget(req.userId as any, category, lim);
   res.status(201).json(b);
 }
 
@@ -21,7 +24,10 @@ export async function listBudgets(_req: Request, res: Response) {
 export async function updateBudget(req: Request, res: Response) {
   const { id } = req.params;
   const { limit } = req.body;
-  const doc = await Budget.findOneAndUpdate({ _id: id, user: req.userId }, { $set: { limit: Number(limit) } }, { new: true });
+  const lim = Number(limit);
+  if (!Number.isFinite(lim) || lim < 0) return res.status(400).json({ error: 'Invalid limit' });
+  if (lim > 100000000) return res.status(400).json({ error: 'Limit exceeds maximum £1,000,000.00' });
+  const doc = await Budget.findOneAndUpdate({ _id: id, user: req.userId }, { $set: { limit: lim } }, { new: true });
   if (!doc) return res.status(404).json({ error: 'Budget not found' });
   res.json(doc);
 }

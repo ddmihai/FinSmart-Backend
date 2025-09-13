@@ -319,6 +319,10 @@ paths:
           schema: { type: string }
       responses: { '200': { description: OK }, '404': { description: Invalid token } }
   /api/budgets:
+    get:
+      tags: [Budgets]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: OK } }
     post:
       tags: [Budgets]
       security: [{ bearerAuth: [] }]
@@ -333,6 +337,34 @@ paths:
                 category: { type: string }
                 limit: { type: integer, minimum: 0 }
       responses: { '201': { description: Created } }
+  /api/budgets/{id}:
+    patch:
+      tags: [Budgets]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [limit]
+              properties:
+                limit: { type: integer, minimum: 0 }
+      responses: { '200': { description: OK }, '404': { description: Not found } }
+    delete:
+      tags: [Budgets]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: OK }, '404': { description: Not found } }
   /api/budgets/usage:
     get:
       tags: [Budgets]
