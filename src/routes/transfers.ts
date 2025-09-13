@@ -3,7 +3,7 @@ import { body, param } from 'express-validator';
 import { requireAuth } from '../middleware/auth.js';
 import { handleValidation } from '../middleware/validate.js';
 import { cancelRecurringTransfer, cancelScheduledPayment, createRecurringTransfer, immediateTransfer, listRecurringTransfers, listScheduledPayments, schedulePayment } from '../controllers/transferController.js';
-import { getTransferLimit, setTransferLimit } from '../controllers/transferController.js';
+import { getTransferLimit, setTransferLimit, listRecipients, addRecipient, deleteRecipient, findUser } from '../controllers/transferController.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -48,5 +48,10 @@ router.post('/scheduled/:id/cancel', param('id').isMongoId(), handleValidation, 
 
 router.get('/limit', getTransferLimit);
 router.post('/limit', body('dailyMax').isInt({ min: 0 }), handleValidation, setTransferLimit);
+
+router.get('/recipients', listRecipients);
+router.post('/recipients', body('name').isString(), body('sortCode').isString(), body('accountNumber').isString(), handleValidation, addRecipient);
+router.delete('/recipients/:id', param('id').isMongoId(), handleValidation, deleteRecipient);
+router.get('/find-user', findUser);
 
 export default router;

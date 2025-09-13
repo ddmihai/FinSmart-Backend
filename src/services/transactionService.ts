@@ -3,6 +3,8 @@ import { Card, ICard } from '../models/Card.js';
 import { Transaction, TransactionType } from '../models/Transaction.js';
 import { TransferLimit } from '../models/TransferLimit.js';
 import { notify } from './notificationService.js';
+import { SavedRecipient } from '../models/SavedRecipient.js';
+import { Budget } from '../models/Budget.js';
 import { Types } from 'mongoose';
 
 export async function createTransaction(opts: {
@@ -77,6 +79,27 @@ export async function createTransaction(opts: {
     if (type === 'expense' || type === 'transfer-out') await notify(uid, 'spend', `${opts.name}`, `-£${(amount/100).toFixed(2)}`);
     if (type === 'transfer-in') await notify(uid, 'transfer-in', `${opts.name}`, `+£${(amount/100).toFixed(2)}`);
   } catch {}
+
+  // Budget alerts: warn when approaching/exceeding
+  if (['expense','transfer-out'].includes(type)) {
+    try {
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+      const accUser = acc.user as any;
+      if (opts.category) {
+        const budget = await Budget.findOne({ user: accUser, category: opts.category });
+        if (budget) {
+          const agg = await Transaction.aggregate([
+            { $match: { account: acc._id, category: opts.category, createdAt: { $gte: monthStart }, type: { $in: ['expense','transfer-out'] } } },
+            { $group: { _id: null, sum: { $sum: '$amount' } } }
+          ]);
+          const spent = (agg[0]?.sum || 0);
+          const ratio = spent / Math.max(1, budget.limit);
+          if (ratio >= 0.8 && ratio < 1.0) await notify(accUser, 'budget-warning', `Approaching ${opts.category} budget`, `Spent £${(spent/100).toFixed(2)} of £${(budget.limit/100).toFixed(2)}`);
+          if (ratio >= 1.0) await notify(accUser, 'budget-exceeded', `${opts.category} budget exceeded`, `Spent £${(spent/100).toFixed(2)} of £${(budget.limit/100).toFixed(2)}`);
+        }
+      }
+    } catch {}
+  }
   return tx;
 }
 
@@ -127,5 +150,14 @@ export async function transferBetweenAccounts(opts: {
       reference: opts.reference,
       counterpart: { name: '', sortCode: from.sortCode, accountNumber: from.accountNumber }
     });
+  }
+
+  // Track frequently paid recipients for this user
+  if (opts.userId) {
+    await SavedRecipient.findOneAndUpdate(
+      { user: opts.userId, sortCode: opts.toDetails.sortCode, accountNumber: opts.toDetails.accountNumber },
+      { $set: { name: opts.toDetails.name, lastUsedAt: new Date() }, $inc: { count: 1 } },
+      { upsert: true }
+    );
   }
 }

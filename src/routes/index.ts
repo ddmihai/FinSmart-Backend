@@ -10,6 +10,8 @@ import transfers from './transfers.js';
 import { requireAuth } from '../middleware/auth.js';
 import { forecastMonthEnd } from '../controllers/forecastController.js';
 import notifications from './notifications.js';
+import goals from './goals.js';
+import insights from './insights.js';
 
 const router = Router();
 
@@ -23,5 +25,7 @@ router.use('/cards', cards);
 router.use('/transfers', transfers);
 router.get('/analytics/forecast', requireAuth, forecastMonthEnd);
 router.use('/notifications', notifications);
+router.use('/goals', goals);
+router.use('/insights', insights);
 
 export default router;

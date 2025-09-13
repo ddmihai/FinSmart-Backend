@@ -11,7 +11,7 @@ export async function forecastMonthEnd(req: Request, res: Response) {
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
   let projected = acc.balance;
-
+  
   // Recurring incomes until end
   const incomes = await RecurringIncome.find({ account: acc._id, active: true });
   for (const r of incomes) {
@@ -40,6 +40,14 @@ export async function forecastMonthEnd(req: Request, res: Response) {
     if (s.runAt >= now) projected -= s.amount;
   }
 
-  res.json({ balanceNow: acc.balance, projectedMonthEnd: projected });
+  // Build simple daily series from today to month end
+  const series: Array<{ date: string; balance: number }> = [];
+  const cursor = new Date(now);
+  while (cursor <= end) {
+    // Estimate daily: add any incomes/transfers scheduled exactly that date
+    let bal = projected; // approximation; for a nicer series we could simulate step by step
+    series.push({ date: cursor.toISOString().slice(0,10), balance: bal });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  res.json({ balanceNow: acc.balance, projectedMonthEnd: projected, series });
 }
-

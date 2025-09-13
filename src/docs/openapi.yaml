@@ -17,6 +17,8 @@ tags:
   - name: Transfers
   - name: Notifications
   - name: Security
+  - name: Goals
+  - name: Insights
 paths:
   /health:
     get:
@@ -357,6 +359,56 @@ paths:
           schema: { type: string }
       responses:
         '200': { description: OK }
+  /api/insights/category:
+    get:
+      tags: [Insights]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: accountId
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: OK } }
+  /api/goals:
+    get:
+      tags: [Goals]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Goals]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, target]
+              properties:
+                name: { type: string }
+                target: { type: integer }
+      responses: { '201': { description: Created } }
+  /api/goals/{id}/deposit:
+    post:
+      tags: [Goals]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountId, amount]
+              properties:
+                accountId: { type: string }
+                amount: { type: integer }
+                note: { type: string }
+      responses: { '200': { description: OK } }
   /api/transfers/send:
     post:
       tags: [Transfers]
@@ -446,6 +498,48 @@ paths:
           required: true
           schema: { type: string }
       responses: { '200': { description: OK } }
+  /api/transfers/recipients:
+    get:
+      tags: [Transfers]
+      security: [{ bearerAuth: [] }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Transfers]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, sortCode, accountNumber]
+              properties:
+                name: { type: string }
+                sortCode: { type: string }
+                accountNumber: { type: string }
+      responses: { '201': { description: Created } }
+  /api/transfers/recipients/{id}:
+    delete:
+      tags: [Transfers]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses: { '200': { description: OK } }
+  /api/transfers/find-user:
+    get:
+      tags: [Transfers]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: email
+          schema: { type: string }
+        - in: query
+          name: name
+          schema: { type: string }
+      responses: { '200': { description: OK }, '404': { description: Not found } }
   /api/transfers/limit:
     get:
       tags: [Transfers]
