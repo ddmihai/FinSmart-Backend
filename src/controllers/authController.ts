@@ -11,12 +11,13 @@ import { createDefaultAccountForUser } from "../services/accountService.js";
  * Helper: Set refresh token as secure, HttpOnly cookie.
  */
 function setRefreshCookie(res: Response, token: string) {
+  const prod = env.NODE_ENV === 'production';
   res.cookie("refreshToken", token, {
     httpOnly: true,
-    secure: env.COOKIE_SECURE, // true in Render
-    sameSite: "none",          // required for cross-site (frontend + backend on different subdomains)
-    path: "/",                 // cookie valid for all paths
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    secure: prod ? env.COOKIE_SECURE : false,
+    sameSite: prod ? "none" : "lax",
+    path: "/",
+    maxAge: 30 * 24 * 60 * 60 * 1000
   });
 }
 
@@ -24,7 +25,8 @@ function setRefreshCookie(res: Response, token: string) {
  * Signup: Register new user and create default account.
  */
 export async function signup(req: Request, res: Response) {
-  const { email, name, password } = req.body;
+  const { name, password } = req.body;
+  const email: string = String(req.body.email || '').toLowerCase().trim();
 
   const existing = await User.findOne({ email });
   if (existing) return res.status(409).json({ error: "Email already in use" });
@@ -50,7 +52,8 @@ export async function signup(req: Request, res: Response) {
  * Login: Validate credentials and issue tokens.
  */
 export async function login(req: Request, res: Response) {
-  const { email, password } = req.body;
+  const password: string = req.body.password;
+  const email: string = String(req.body.email || '').toLowerCase().trim();
 
   const user = await User.findOne({ email });
   if (!user) return res.status(401).json({ error: "Invalid credentials" });

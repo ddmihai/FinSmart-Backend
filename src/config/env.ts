@@ -19,7 +19,7 @@ export const env = {
   RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX ?? 200),
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN ?? 'localhost',
   COOKIE_SECURE: (process.env.COOKIE_SECURE ?? 'false') === 'true',
-  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173',
   AGENDA_DB_COLLECTION: process.env.AGENDA_DB_COLLECTION ?? 'jobs',
   AGENDA_ENABLED: (process.env.AGENDA_ENABLED ?? 'true') === 'true'
 };

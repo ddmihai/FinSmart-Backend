@@ -3,16 +3,13 @@ import { Application, Request, Response, NextFunction } from 'express';
 import { env } from '../config/env.js';
 
 export function csrfInit(app: Application) {
-  if (env.NODE_ENV === 'test') {
+  // Simplify CSRF in non-production for easier local development and mobile testing
+  if (env.NODE_ENV !== 'production') {
     app.get('/api/security/csrf-token', (_req: Request, res: Response) => {
-      res.json({ csrfToken: 'test' });
+      res.json({ csrfToken: 'dev' });
     });
     return;
   }
-
-
-
-
 
   const csrfProtection = csurf({ cookie: { httpOnly: true, sameSite: 'none', secure: env.COOKIE_SECURE } });
 
