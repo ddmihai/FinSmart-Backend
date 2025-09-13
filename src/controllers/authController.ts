@@ -6,6 +6,7 @@ import { env } from "../config/env.js";
 import jwt from "jsonwebtoken";
 import { RefreshToken } from "../models/RefreshToken.js";
 import { createDefaultAccountForUser } from "../services/accountService.js";
+import { Types } from "mongoose";
 
 /**
  * Helper: Set refresh token as secure, HttpOnly cookie.
@@ -19,6 +20,8 @@ function setRefreshCookie(res: Response, token: string) {
     path: "/",
     maxAge: 30 * 24 * 60 * 60 * 1000
   });
+  // Clear any stale path-scoped cookies that may conflict (seen during dev)
+  res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
 }
 
 /**
@@ -82,7 +85,17 @@ export async function refresh(req: Request, res: Response) {
   try {
     const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { sub: string };
     const doc = await RefreshToken.findOne({ token });
-    if (!doc) return res.status(401).json({ error: "Invalid refresh token" });
+    if (!doc) {
+      // In development, tolerate stale/missing DB token and recover by issuing a new one
+      if (env.NODE_ENV !== 'production') {
+        const userId = new Types.ObjectId(decoded.sub);
+        const access = signAccessToken({ sub: decoded.sub });
+        const newRefresh = await issueRefreshToken(userId as any);
+        setRefreshCookie(res, newRefresh);
+        return res.json({ accessToken: access });
+      }
+      return res.status(401).json({ error: "Invalid refresh token" });
+    }
 
     const access = signAccessToken({ sub: decoded.sub });
 
@@ -106,6 +119,7 @@ export async function logout(req: Request, res: Response) {
   if (token) await RefreshToken.deleteOne({ token });
 
   res.clearCookie("refreshToken", { path: "/" });
+  res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
   res.json({ ok: true });
 }
 
