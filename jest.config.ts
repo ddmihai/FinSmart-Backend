@@ -15,7 +15,7 @@ const config: Config = {
       'ts-jest',
       {
         useESM: true,
-        tsconfig: { module: 'ES2022' }
+        tsconfig: { module: 'ES2022', types: ['jest', 'node'] }
       }
     ]
   },
