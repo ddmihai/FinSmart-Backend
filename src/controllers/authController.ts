@@ -60,17 +60,19 @@ export async function refresh(req: Request, res: Response) {
     const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { sub: string };
     const doc = await RefreshToken.findOne({ token });
     if (!doc) return res.status(401).json({ error: 'Invalid refresh token' });
+
     const access = signAccessToken({ sub: decoded.sub });
-    // Rotate refresh token to ensure cookie gets set and token store updated
+
+    // Rotate refresh token
     const newRefresh = await issueRefreshToken(doc.user as any);
-    try { await RefreshToken.deleteOne({ token }); } catch { }
+    await RefreshToken.deleteOne({ token });
     setRefreshCookie(req, res, newRefresh);
+
     res.json({ accessToken: access });
   } catch {
     return res.status(401).json({ error: 'Invalid refresh token' });
   }
 }
-
 export async function logout(req: Request, res: Response) {
   const token = req.cookies?.refreshToken;
   if (token) await RefreshToken.deleteOne({ token });
