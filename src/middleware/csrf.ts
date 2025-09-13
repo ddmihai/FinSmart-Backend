@@ -17,7 +17,8 @@ export function csrfInit(app: Application) {
     '/api/auth/login',
     '/api/auth/signup',
     '/api/auth/logout',
-    '/api/auth/refresh'
+    '/api/auth/refresh',
+    '/api/auth/bootstrap'
   ]);
 
   app.use((req: Request, res: Response, next: NextFunction) => {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { handleValidation } from '../middleware/validate.js';
-import { login, logout, me, refresh, signup } from '../controllers/authController.js';
+import { login, logout, me, refresh, signup, bootstrap } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -21,7 +21,9 @@ router.post('/login',
 
 router.post('/logout', logout);
 router.post('/refresh', refresh);
+router.post('/bootstrap', bootstrap);
+// Helpful response for accidental GETs to refresh in browsers
+router.get('/refresh', (_req, res) => res.status(405).json({ error: 'Method Not Allowed', hint: 'Use POST /api/auth/refresh' }));
 router.get('/me', requireAuth, me);
 
 export default router;
-

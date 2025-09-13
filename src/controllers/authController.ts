@@ -132,3 +132,31 @@ export async function me(req: Request, res: Response) {
 
   res.json({ id: user._id, email: user.email, name: user.name });
 }
+
+/**
+ * Bootstrap: Single-call refresh + user fetch (for initial app load).
+ * Expects refreshToken cookie. Rotates it, issues access token, and returns user.
+ */
+export async function bootstrap(req: Request, res: Response) {
+  const token = req.cookies?.refreshToken;
+  if (!token) return res.status(401).json({ error: 'Missing refresh token' });
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as { sub: string };
+    const doc = await RefreshToken.findOne({ token });
+    if (!doc) return res.status(401).json({ error: 'Invalid refresh token' });
+
+    const user = await User.findById(decoded.sub);
+    if (!user) return res.status(404).json({ error: 'Not found' });
+
+    const access = signAccessToken({ sub: decoded.sub });
+    const newRefresh = await issueRefreshToken(doc.user as any);
+    await RefreshToken.deleteOne({ token });
+
+    setRefreshCookie(res, newRefresh);
+
+    res.json({ accessToken: access, user: { id: user._id, email: user.email, name: user.name } });
+  } catch {
+    return res.status(401).json({ error: 'Invalid refresh token' });
+  }
+}
