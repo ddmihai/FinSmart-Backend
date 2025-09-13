@@ -4,6 +4,7 @@ import { RecurringIncome } from '../models/RecurringIncome.js';
 import { Transaction } from '../models/Transaction.js';
 import { createTransaction, transferBetweenAccounts } from '../services/transactionService.js';
 import { BlockedMerchant } from '../models/BlockedMerchant.js';
+import { UserAction } from '../models/UserAction.js';
 
 export async function addIncome(req: Request, res: Response) {
   const { accountId, amount, category, name, note, recurring, interval } = req.body;
@@ -75,6 +76,7 @@ export async function hideTransaction(req: Request, res: Response) {
   const doc = await Transaction.findOne({ _id: id }).populate('account');
   if (!doc || String((doc as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
   doc.hidden = true; await doc.save();
+  try { await UserAction.create({ user: req.userId as any, type: 'hide_tx', txId: doc._id }); } catch {}
   res.json({ ok: true });
 }
 
@@ -83,6 +85,7 @@ export async function unhideTransaction(req: Request, res: Response) {
   const doc = await Transaction.findOne({ _id: id }).populate('account');
   if (!doc || String((doc as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
   doc.hidden = false; await doc.save();
+  try { await UserAction.create({ user: req.userId as any, type: 'unhide_tx', txId: doc._id }); } catch {}
   res.json({ ok: true });
 }
 
@@ -92,6 +95,7 @@ export async function blockMerchant(req: Request, res: Response) {
   if (!doc || String((doc as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
   if (!doc.name) return res.status(400).json({ error: 'Transaction has no merchant name' });
   await BlockedMerchant.findOneAndUpdate({ user: (doc as any).account.user, name: doc.name }, { $setOnInsert: { createdAt: new Date() } }, { upsert: true });
+  try { await UserAction.create({ user: req.userId as any, type: 'block_merchant', merchant: doc.name }); } catch {}
   res.json({ ok: true });
 }
 
@@ -101,6 +105,7 @@ export async function unblockMerchant(req: Request, res: Response) {
   if (!doc || String((doc as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
   if (!doc.name) return res.status(400).json({ error: 'Transaction has no merchant name' });
   await BlockedMerchant.deleteOne({ user: (doc as any).account.user, name: doc.name });
+  try { await UserAction.create({ user: req.userId as any, type: 'unblock_merchant', merchant: doc.name }); } catch {}
   res.json({ ok: true });
 }
 
@@ -113,7 +118,13 @@ export async function deleteBlockedMerchant(req: Request, res: Response) {
   const { id } = req.params as any;
   const removed = await BlockedMerchant.findOneAndDelete({ _id: id, user: req.userId });
   if (!removed) return res.status(404).json({ error: 'Not found' });
+  try { await UserAction.create({ user: req.userId as any, type: 'unblock_merchant', merchant: removed.name }); } catch {}
   res.json({ ok: true });
+}
+
+export async function listUserActionHistory(req: Request, res: Response) {
+  const items = await UserAction.find({ user: req.userId }).sort({ createdAt: -1 }).limit(200).lean();
+  res.json(items);
 }
 
 export async function updateTransaction(req: Request, res: Response) {
