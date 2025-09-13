@@ -3,6 +3,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
+import type { CorsOptions } from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
@@ -22,8 +23,8 @@ const defaultFrontend = 'https://finsmart-frontend-ntct.onrender.com';
 if (env.NODE_ENV === 'production' && !allowedOrigins.includes(defaultFrontend)) {
   allowedOrigins.push(defaultFrontend);
 }
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
+const corsOptions: CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin) return callback(null, true); // allow same-origin/non-browser/tools
     if (allowedOrigins.includes(origin)) return callback(null, true);
     // Do not throw; just disallow CORS for unexpected origins
