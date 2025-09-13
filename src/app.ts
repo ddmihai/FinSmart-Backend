@@ -17,11 +17,17 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean);
+// Production safety: include known frontend Render URL if missing
+const defaultFrontend = 'https://finsmart-frontend-ntct.onrender.com';
+if (env.NODE_ENV === 'production' && !allowedOrigins.includes(defaultFrontend)) {
+  allowedOrigins.push(defaultFrontend);
+}
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow same-origin/non-browser
+    if (!origin) return callback(null, true); // allow same-origin/non-browser/tools
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    // Do not throw; just disallow CORS for unexpected origins
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
