@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { requireAuth } from '../middleware/auth.js';
 import { handleValidation } from '../middleware/validate.js';
-import { freezeCard, setCardLimits, unfreezeCard, revealCard } from '../controllers/cardController.js';
+import { freezeCard, setCardLimits, unfreezeCard, revealCard, listLimitChanges, deleteLimitChange } from '../controllers/cardController.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -11,6 +11,7 @@ router.post('/:cardId/freeze', param('cardId').isMongoId(), handleValidation, fr
 router.post('/:cardId/unfreeze', param('cardId').isMongoId(), handleValidation, unfreezeCard);
 router.post('/:cardId/limits', param('cardId').isMongoId(), body('dailyLimit').optional().isInt({ min: 0 }), body('weeklyLimit').optional().isInt({ min: 0 }), handleValidation, setCardLimits);
 router.post('/:cardId/reveal', param('cardId').isMongoId(), body('password').isString(), handleValidation, revealCard);
+router.get('/:cardId/limit-changes', param('cardId').isMongoId(), handleValidation, listLimitChanges);
+router.delete('/limit-changes/:id', param('id').isMongoId(), handleValidation, deleteLimitChange);
 
 export default router;
-

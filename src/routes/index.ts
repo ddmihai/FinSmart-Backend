@@ -13,6 +13,7 @@ import notifications from './notifications.js';
 import goals from './goals.js';
 import insights from './insights.js';
 import diagnostics from './diagnostics.js';
+import settings from './settings.js';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use('/notifications', notifications);
 router.use('/goals', goals);
 router.use('/insights', insights);
 router.use('/diagnostics', diagnostics);
+router.use('/settings', settings);
 
 export default router;

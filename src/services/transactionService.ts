@@ -6,6 +6,7 @@ import { notify } from './notificationService.js';
 import { SavedRecipient } from '../models/SavedRecipient.js';
 import { Budget } from '../models/Budget.js';
 import { Types } from 'mongoose';
+import { BlockedMerchant } from '../models/BlockedMerchant.js';
 
 export async function createTransaction(opts: {
   accountId: Types.ObjectId;
@@ -57,6 +58,15 @@ export async function createTransaction(opts: {
   let delta = 0;
   if (type === 'income' || type === 'deposit' || type === 'transfer-in') delta = amount;
   if (type === 'expense' || type === 'transfer-out') delta = -amount;
+
+  // Merchant block check for expenses/transfer-out
+  if ((type === 'expense' || type === 'transfer-out') && opts.name) {
+    const accUser = (acc.user as any) as Types.ObjectId;
+    const exists = await BlockedMerchant.findOne({ user: accUser, name: opts.name });
+    if (exists) {
+      throw Object.assign(new Error('Merchant blocked'), { status: 403 });
+    }
+  }
 
   acc.balance += delta;
   await acc.save();

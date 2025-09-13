@@ -61,6 +61,12 @@ export async function initJobs() {
   await agenda.every('5 minutes', 'process recurring incomes');
   await agenda.every('10 minutes', 'process recurring transfers');
   await agenda.every('2 minutes', 'process scheduled payments');
+  // Kick jobs immediately on boot to catch up after inactivity
+  try {
+    await agenda.now('process scheduled payments', {} as any);
+    await agenda.now('process recurring incomes', {} as any);
+    await agenda.now('process recurring transfers', {} as any);
+  } catch {/* ignore if not registered yet */}
 }
 
 export function getAgenda() {

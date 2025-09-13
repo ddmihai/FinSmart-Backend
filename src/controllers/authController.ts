@@ -7,32 +7,38 @@ import jwt from "jsonwebtoken";
 import { RefreshToken } from "../models/RefreshToken.js";
 import { createDefaultAccountForUser } from "../services/accountService.js";
 import { Types } from "mongoose";
+import { UserSettings } from "../models/UserSettings.js";
 
 /**
  * Helper: Set refresh token as secure, HttpOnly cookie.
  */
-function setRefreshCookie(res: Response, token: string) {
+async function setRefreshCookie(res: Response, token: string, userId?: string) {
   const prod = env.NODE_ENV === 'production';
+  const settings = userId ? await UserSettings.findOne({ user: userId }) : null;
+  const onClose = settings?.logoutPolicy === 'onClose';
   res.cookie("refreshToken", token, {
     httpOnly: true,
     secure: prod ? env.COOKIE_SECURE : false,
     sameSite: prod ? "none" : "lax",
     path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000
+    ...(onClose ? {} : { maxAge: 30 * 24 * 60 * 60 * 1000 })
   });
   // Clear any stale path-scoped cookies that may conflict (seen during dev)
   res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
 }
 
-function setAccessCookie(res: Response, token: string) {
+async function setAccessCookie(res: Response, token: string, userId?: string) {
   const prod = env.NODE_ENV === 'production';
+  const settings = userId ? await UserSettings.findOne({ user: userId }) : null;
+  const onClose = settings?.logoutPolicy === 'onClose';
+  const idle = settings?.logoutPolicy === 'idle30m';
   // Keep access token short-lived; cookie expiry in sync ~15 minutes
   res.cookie('accessToken', token, {
     httpOnly: true,
     secure: prod ? env.COOKIE_SECURE : false,
     sameSite: prod ? 'none' : 'lax',
     path: '/',
-    maxAge: 15 * 60 * 1000
+    ...(onClose ? {} : { maxAge: (idle ? 30 : 15) * 60 * 1000 })
   });
 }
 
@@ -55,8 +61,8 @@ export async function signup(req: Request, res: Response) {
   const access = signAccessToken({ sub: String(user._id) });
   const refresh = await issueRefreshToken(user._id as any);
 
-  setRefreshCookie(res, refresh);
-  setAccessCookie(res, access);
+  await setRefreshCookie(res, refresh, String(user._id));
+  await setAccessCookie(res, access, String(user._id));
 
   res.status(201).json({
     accessToken: access,
@@ -80,8 +86,8 @@ export async function login(req: Request, res: Response) {
   const access = signAccessToken({ sub: String(user._id) });
   const refresh = await issueRefreshToken(user._id as any);
 
-  setRefreshCookie(res, refresh);
-  setAccessCookie(res, access);
+  await setRefreshCookie(res, refresh, String(user._id));
+  await setAccessCookie(res, access, String(user._id));
 
   res.json({
     accessToken: access,
@@ -105,7 +111,7 @@ export async function refresh(req: Request, res: Response) {
         const userId = new Types.ObjectId(decoded.sub);
         const access = signAccessToken({ sub: decoded.sub });
         const newRefresh = await issueRefreshToken(userId as any);
-        setRefreshCookie(res, newRefresh);
+        await setRefreshCookie(res, newRefresh, decoded.sub);
         return res.json({ accessToken: access });
       }
       return res.status(401).json({ error: "Invalid refresh token" });
@@ -117,8 +123,8 @@ export async function refresh(req: Request, res: Response) {
     const newRefresh = await issueRefreshToken(doc.user as any);
     await RefreshToken.deleteOne({ token });
 
-    setRefreshCookie(res, newRefresh);
-    setAccessCookie(res, access);
+    await setRefreshCookie(res, newRefresh, decoded.sub);
+    await setAccessCookie(res, access, decoded.sub);
 
     res.json({ accessToken: access });
   } catch {
@@ -169,8 +175,8 @@ export async function bootstrap(req: Request, res: Response) {
     const newRefresh = await issueRefreshToken(doc.user as any);
     await RefreshToken.deleteOne({ token });
 
-    setRefreshCookie(res, newRefresh);
-    setAccessCookie(res, access);
+    await setRefreshCookie(res, newRefresh, decoded.sub);
+    await setAccessCookie(res, access, decoded.sub);
 
     res.json({ accessToken: access, user: { id: user._id, email: user.email, name: user.name } });
   } catch {

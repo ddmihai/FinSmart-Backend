@@ -17,6 +17,7 @@ export interface ITransaction extends Document {
     sortCode?: string;
     accountNumber?: string;
   };
+  hidden?: boolean;
   createdAt: Date;
 }
 
@@ -35,6 +36,7 @@ const transactionSchema = new Schema<ITransaction>({
     sortCode: String,
     accountNumber: String
   },
+  hidden: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

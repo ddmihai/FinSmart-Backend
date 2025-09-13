@@ -3,7 +3,7 @@ import { Transaction } from '../models/Transaction.js';
 import { Types } from 'mongoose';
 
 export async function statementSummary(accountId: Types.ObjectId, filters: any) {
-  const match: any = { account: accountId };
+  const match: any = { account: accountId, hidden: { $ne: true } };
   if (filters.from) match.createdAt = { ...match.createdAt, $gte: new Date(filters.from) };
   if (filters.to) match.createdAt = { ...match.createdAt, $lte: new Date(filters.to) };
   if (filters.name) match.name = new RegExp(String(filters.name), 'i');
