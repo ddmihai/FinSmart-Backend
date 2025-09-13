@@ -16,10 +16,19 @@ export const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
-app.use(cors({
-  origin: env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
-  credentials: true
-}));
+const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow same-origin/non-browser
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token'],
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
