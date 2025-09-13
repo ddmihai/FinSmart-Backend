@@ -18,22 +18,13 @@ function sameSiteForOrigin(originHost: string | null, serverHost: string | null)
 }
 
 function setRefreshCookie(req: Request, res: Response, token: string) {
-  const originHeader = req.headers.origin || null;
-  const serverHost = req.get('host') || null;
-  const originHost = originHeader ? new URL(originHeader).hostname : null;
-  const sameSite = sameSiteForOrigin(originHost, serverHost);
-  const options: any = {
+  res.cookie('refreshToken', token, {
     httpOnly: true,
-    sameSite,
-    secure: env.COOKIE_SECURE,
-    path: '/'
-  };
-  if (env.COOKIE_DOMAIN && env.COOKIE_DOMAIN !== 'localhost') {
-    // Only set Domain if it differs from current host. Otherwise keep host-only cookie.
-    const hostOnly = serverHost && env.COOKIE_DOMAIN.replace(/^\./, '') === serverHost.replace(/^\./, '');
-    if (!hostOnly) options.domain = env.COOKIE_DOMAIN;
-  }
-  res.cookie('refreshToken', token, options);
+    secure: env.COOKIE_SECURE,  // true in Render, false in local dev
+    sameSite: 'none',           // always none for cross-site (frontend+backend on different subdomains)
+    path: '/',                  // cookie valid for all paths
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  });
 }
 
 export async function signup(req: Request, res: Response) {
@@ -72,7 +63,7 @@ export async function refresh(req: Request, res: Response) {
     const access = signAccessToken({ sub: decoded.sub });
     // Rotate refresh token to ensure cookie gets set and token store updated
     const newRefresh = await issueRefreshToken(doc.user as any);
-    try { await RefreshToken.deleteOne({ token }); } catch {}
+    try { await RefreshToken.deleteOne({ token }); } catch { }
     setRefreshCookie(req, res, newRefresh);
     res.json({ accessToken: access });
   } catch {

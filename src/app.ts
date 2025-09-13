@@ -34,6 +34,8 @@ const corsOptions: CorsOptions = {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token'],
 };
+
+app.set('trust proxy', 1);
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
