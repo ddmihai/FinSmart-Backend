@@ -7,7 +7,6 @@ import type { CorsOptions } from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
-import { csrfInit } from './middleware/csrf.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import routes from './routes/index.js';
 import swagger from './docs/swagger.js';
@@ -32,7 +31,7 @@ const corsOptions: CorsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.set('trust proxy', 1);
@@ -52,7 +51,6 @@ app.use(rateLimit({
   max: env.RATE_LIMIT_MAX
 }));
 
-csrfInit(app);
 
 app.use('/api', routes);
 app.use('/api/docs', swagger);

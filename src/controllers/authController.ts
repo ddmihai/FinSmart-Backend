@@ -24,6 +24,18 @@ function setRefreshCookie(res: Response, token: string) {
   res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
 }
 
+function setAccessCookie(res: Response, token: string) {
+  const prod = env.NODE_ENV === 'production';
+  // Keep access token short-lived; cookie expiry in sync ~15 minutes
+  res.cookie('accessToken', token, {
+    httpOnly: true,
+    secure: prod ? env.COOKIE_SECURE : false,
+    sameSite: prod ? 'none' : 'lax',
+    path: '/',
+    maxAge: 15 * 60 * 1000
+  });
+}
+
 /**
  * Signup: Register new user and create default account.
  */
@@ -44,6 +56,7 @@ export async function signup(req: Request, res: Response) {
   const refresh = await issueRefreshToken(user._id as any);
 
   setRefreshCookie(res, refresh);
+  setAccessCookie(res, access);
 
   res.status(201).json({
     accessToken: access,
@@ -68,6 +81,7 @@ export async function login(req: Request, res: Response) {
   const refresh = await issueRefreshToken(user._id as any);
 
   setRefreshCookie(res, refresh);
+  setAccessCookie(res, access);
 
   res.json({
     accessToken: access,
@@ -104,6 +118,7 @@ export async function refresh(req: Request, res: Response) {
     await RefreshToken.deleteOne({ token });
 
     setRefreshCookie(res, newRefresh);
+    setAccessCookie(res, access);
 
     res.json({ accessToken: access });
   } catch {
@@ -120,6 +135,7 @@ export async function logout(req: Request, res: Response) {
 
   res.clearCookie("refreshToken", { path: "/" });
   res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
+  res.clearCookie('accessToken', { path: '/' });
   res.json({ ok: true });
 }
 
@@ -154,6 +170,7 @@ export async function bootstrap(req: Request, res: Response) {
     await RefreshToken.deleteOne({ token });
 
     setRefreshCookie(res, newRefresh);
+    setAccessCookie(res, access);
 
     res.json({ accessToken: access, user: { id: user._id, email: user.email, name: user.name } });
   } catch {

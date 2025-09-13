@@ -22,15 +22,12 @@ export async function diagnostics(req: Request, res: Response) {
 
   info.cookies = {
     names: Object.keys(req.cookies || {}),
-    hasRefreshToken: Boolean(req.cookies?.refreshToken || req.signedCookies?.refreshToken)
+    hasRefreshToken: Boolean(req.cookies?.refreshToken || req.signedCookies?.refreshToken),
+    hasAccessToken: Boolean(req.cookies?.accessToken)
   };
 
-  info.csrf = {
-    header: req.get('x-csrf-token') || null,
-    hasCookie: Boolean(req.cookies?._csrf),
-    cookieSameSite: 'none',
-    // Intentionally do not echo cookie value
-  };
+  // CSRF fully disabled; keep a note for clarity
+  info.csrf = { enabled: false };
 
   info.cookieFlags = {
     refresh: { sameSite: 'none', secure: env.COOKIE_SECURE, path: '/' },

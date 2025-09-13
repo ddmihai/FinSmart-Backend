@@ -12,9 +12,10 @@ declare global {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'Missing Authorization' });
-  const [scheme, token] = auth.split(' ');
-  if (scheme !== 'Bearer' || !token) return res.status(401).json({ error: 'Invalid Authorization' });
+  let token: string | undefined;
+  if (auth && auth.startsWith('Bearer ')) token = auth.slice('Bearer '.length);
+  if (!token && req.cookies?.accessToken) token = req.cookies.accessToken;
+  if (!token) return res.status(401).json({ error: 'Missing Authorization' });
   try {
     const decoded = verifyAccessToken(token);
     req.userId = decoded.sub;
@@ -23,4 +24,3 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 }
-
