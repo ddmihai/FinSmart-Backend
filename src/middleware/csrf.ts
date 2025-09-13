@@ -25,6 +25,8 @@ export function csrfInit(app: Application) {
   });
 
   app.get('/api/security/csrf-token', (req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
     res.json({ csrfToken: req.csrfToken?.() });
   });
 }

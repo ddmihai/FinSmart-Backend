@@ -13,8 +13,8 @@ import { createDefaultAccountForUser } from "../services/accountService.js";
 function setRefreshCookie(res: Response, token: string) {
   res.cookie("refreshToken", token, {
     httpOnly: true,
-    secure: env.COOKIE_SECURE, // true in Render, false locally
-    sameSite: "none",          // required for cross-site frontend/backend
+    secure: env.COOKIE_SECURE, // true in Render
+    sameSite: "none",          // required for cross-site (frontend + backend on different subdomains)
     path: "/",                 // cookie valid for all paths
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   });
