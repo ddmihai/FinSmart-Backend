@@ -19,5 +19,9 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
     // eslint-disable-next-line no-console
     console.error(err);
   }
+  // Provide helpful CSRF error details consistently
+  if (status === 403 && (err.code === 'EBADCSRFTOKEN' || /csrf/i.test(message))) {
+    return res.status(403).json({ error: 'Invalid CSRF token', code: 'EBADCSRFTOKEN' });
+  }
   res.status(status).json({ error: message });
 }

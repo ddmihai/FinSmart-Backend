@@ -3,6 +3,14 @@ import { Application, Request, Response, NextFunction } from 'express';
 import { env } from '../config/env.js';
 
 export function csrfInit(app: Application) {
+  // Optional global disable (for emergency debugging only)
+  if (env.CSRF_DISABLED) {
+    app.get('/api/security/csrf-token', (_req: Request, res: Response) => {
+      res.json({ csrfToken: 'disabled' });
+    });
+    return;
+  }
+
   // Simplify CSRF in non-production for easier local development and mobile testing
   if (env.NODE_ENV !== 'production') {
     app.get('/api/security/csrf-token', (_req: Request, res: Response) => {

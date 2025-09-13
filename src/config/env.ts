@@ -15,6 +15,7 @@ export const env = {
   ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL ?? '15m',
   REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL ?? '30d',
   CSRF_SECRET: process.env.CSRF_SECRET ?? (process.env.NODE_ENV === 'test' ? 'test_csrf' : (() => { throw new Error('Missing env CSRF_SECRET'); })()),
+  CSRF_DISABLED: (process.env.CSRF_DISABLED ?? 'false') === 'true',
   RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
   RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX ?? 200),
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN ?? 'localhost',

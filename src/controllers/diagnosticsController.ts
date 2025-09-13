@@ -25,6 +25,13 @@ export async function diagnostics(req: Request, res: Response) {
     hasRefreshToken: Boolean(req.cookies?.refreshToken || req.signedCookies?.refreshToken)
   };
 
+  info.csrf = {
+    header: req.get('x-csrf-token') || null,
+    hasCookie: Boolean(req.cookies?._csrf),
+    cookieSameSite: 'none',
+    // Intentionally do not echo cookie value
+  };
+
   info.cookieFlags = {
     refresh: { sameSite: 'none', secure: env.COOKIE_SECURE, path: '/' },
     csrf: { sameSite: 'none', secure: env.COOKIE_SECURE, path: 'set per csurf' },
@@ -67,4 +74,3 @@ export async function diagnostics(req: Request, res: Response) {
 export async function diagnosticsAuth(req: Request, res: Response) {
   res.json({ ok: true, userId: (req as any).userId || null });
 }
-
