@@ -21,7 +21,6 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: ALLOWED_ORIGINS
-        value: "https://finsmart-frontend.onrender.com"
+        value: "https://finsmart-frontend-ntct.onrender.com"
       - key: AGENDA_ENABLED
         value: "true"
-

@@ -8,13 +8,17 @@ import { RefreshToken } from '../models/RefreshToken.js';
 import { createDefaultAccountForUser } from '../services/accountService.js';
 
 function setRefreshCookie(res: Response, token: string) {
-  res.cookie('refreshToken', token, {
+  const options: any = {
     httpOnly: true,
     sameSite: 'lax',
-    domain: env.COOKIE_DOMAIN,
     secure: env.COOKIE_SECURE,
     path: '/api/auth/refresh'
-  });
+  };
+  // Only set domain if provided and not localhost; otherwise use host-only cookie
+  if (env.COOKIE_DOMAIN && env.COOKIE_DOMAIN !== 'localhost') {
+    options.domain = env.COOKIE_DOMAIN;
+  }
+  res.cookie('refreshToken', token, options);
 }
 
 export async function signup(req: Request, res: Response) {
