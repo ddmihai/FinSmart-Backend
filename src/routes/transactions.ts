@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { body, query, param } from 'express-validator';
 import { requireAuth } from '../middleware/auth.js';
 import { handleValidation } from '../middleware/validate.js';
-import { addExpense, addIncome, deposit, listTransactions, transfer, hideTransaction, unhideTransaction, blockMerchant, unblockMerchant } from '../controllers/transactionController.js';
+import { addExpense, addIncome, deposit, listTransactions, transfer, hideTransaction, unhideTransaction, blockMerchant, unblockMerchant, listBlockedMerchants, deleteBlockedMerchant, updateTransaction } from '../controllers/transactionController.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -50,5 +50,8 @@ router.post('/:id/hide', param('id').isMongoId(), handleValidation, hideTransact
 router.post('/:id/unhide', param('id').isMongoId(), handleValidation, unhideTransaction);
 router.post('/:id/block-merchant', param('id').isMongoId(), handleValidation, blockMerchant);
 router.post('/:id/unblock-merchant', param('id').isMongoId(), handleValidation, unblockMerchant);
+router.get('/blocked', listBlockedMerchants);
+router.delete('/blocked/:id', param('id').isMongoId(), handleValidation, deleteBlockedMerchant);
+router.patch('/:id', param('id').isMongoId(), body('name').optional().isString(), body('category').optional().isString(), body('note').optional().isString(), handleValidation, updateTransaction);
 
 export default router;

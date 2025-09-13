@@ -54,11 +54,12 @@ function nextFromInterval(interval: 'daily' | 'weekly' | 'monthly') {
 }
 
 export async function listTransactions(req: Request, res: Response) {
-  const { accountId, q, from, to, name, min, max, includeHidden } = req.query as any;
+  const { accountId, q, from, to, name, min, max, includeHidden, hiddenOnly } = req.query as any;
   const account = await Account.findOne({ _id: accountId, user: req.userId });
   if (!account) return res.status(404).json({ error: 'Account not found' });
   const filter: any = { account: account._id };
-  if (!includeHidden) filter.hidden = { $ne: true };
+  if (hiddenOnly) filter.hidden = true;
+  else if (!includeHidden) filter.hidden = { $ne: true };
   if (from) filter.createdAt = { ...filter.createdAt, $gte: new Date(from) };
   if (to) filter.createdAt = { ...filter.createdAt, $lte: new Date(to) };
   if (name) filter.name = new RegExp(String(name), 'i');
@@ -100,5 +101,29 @@ export async function unblockMerchant(req: Request, res: Response) {
   if (!doc || String((doc as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
   if (!doc.name) return res.status(400).json({ error: 'Transaction has no merchant name' });
   await BlockedMerchant.deleteOne({ user: (doc as any).account.user, name: doc.name });
+  res.json({ ok: true });
+}
+
+export async function listBlockedMerchants(req: Request, res: Response) {
+  const list = await BlockedMerchant.find({ user: req.userId }).sort({ createdAt: -1 }).lean();
+  res.json(list);
+}
+
+export async function deleteBlockedMerchant(req: Request, res: Response) {
+  const { id } = req.params as any;
+  const removed = await BlockedMerchant.findOneAndDelete({ _id: id, user: req.userId });
+  if (!removed) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true });
+}
+
+export async function updateTransaction(req: Request, res: Response) {
+  const { id } = req.params as any;
+  const { name, category, note } = req.body as { name?: string; category?: string; note?: string };
+  const tx = await Transaction.findOne({ _id: id }).populate('account');
+  if (!tx || String((tx as any).account.user) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
+  if (name !== undefined) (tx as any).name = name;
+  if (category !== undefined) (tx as any).category = category || undefined;
+  if (note !== undefined) (tx as any).note = note || undefined;
+  await tx.save();
   res.json({ ok: true });
 }
