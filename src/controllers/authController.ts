@@ -7,14 +7,27 @@ import jwt from 'jsonwebtoken';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { createDefaultAccountForUser } from '../services/accountService.js';
 
-function setRefreshCookie(res: Response, token: string) {
+function sameSiteForOrigin(originHost: string | null, serverHost: string | null): 'none' | 'lax' {
+  try {
+    if (!originHost || !serverHost) return 'none';
+    const originParts = originHost.split('.').slice(-2).join('.');
+    const serverParts = serverHost.split('.').slice(-2).join('.');
+    // If both share the same eTLD+1 (e.g., onrender.com), treat as same-site
+    return originParts === serverParts ? 'lax' : 'none';
+  } catch { return 'none'; }
+}
+
+function setRefreshCookie(req: Request, res: Response, token: string) {
+  const originHeader = req.headers.origin || null;
+  const serverHost = req.get('host') || null;
+  const originHost = originHeader ? new URL(originHeader).hostname : null;
+  const sameSite = sameSiteForOrigin(originHost, serverHost);
   const options: any = {
     httpOnly: true,
-    sameSite: 'none',
+    sameSite,
     secure: env.COOKIE_SECURE,
     path: '/'
   };
-  // Only set domain if provided and not localhost; otherwise use host-only cookie
   if (env.COOKIE_DOMAIN && env.COOKIE_DOMAIN !== 'localhost') {
     options.domain = env.COOKIE_DOMAIN;
   }
@@ -31,7 +44,7 @@ export async function signup(req: Request, res: Response) {
   await createDefaultAccountForUser(user._id as any);
   const access = signAccessToken({ sub: String(user._id) });
   const refresh = await issueRefreshToken(user._id as any);
-  setRefreshCookie(res, refresh);
+  setRefreshCookie(req, res, refresh);
   res.status(201).json({ accessToken: access, user: { id: user._id, email: user.email, name: user.name } });
 }
 
@@ -43,7 +56,7 @@ export async function login(req: Request, res: Response) {
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
   const access = signAccessToken({ sub: String(user._id) });
   const refresh = await issueRefreshToken(user._id as any);
-  setRefreshCookie(res, refresh);
+  setRefreshCookie(req, res, refresh);
   res.json({ accessToken: access, user: { id: user._id, email: user.email, name: user.name } });
 }
 
