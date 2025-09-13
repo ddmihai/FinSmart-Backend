@@ -39,5 +39,9 @@ const transactionSchema = new Schema<ITransaction>({
 });
 
 transactionSchema.index({ name: 'text', note: 'text' });
+// Optimized indexes for common queries and aggregations
+transactionSchema.index({ account: 1, createdAt: -1 });
+transactionSchema.index({ card: 1, createdAt: -1 });
+transactionSchema.index({ account: 1, category: 1, createdAt: -1 });
 
 export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);

@@ -17,7 +17,7 @@ export async function getBudgetUsage(req: Request, res: Response) {
 }
 
 export async function listBudgets(_req: Request, res: Response) {
-  const list = await Budget.find({ user: res.req.userId }).sort({ category: 1 });
+  const list = await Budget.find({ user: res.req.userId }).sort({ category: 1 }).lean();
   res.json(list);
 }
 

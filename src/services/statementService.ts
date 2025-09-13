@@ -3,16 +3,63 @@ import { Transaction } from '../models/Transaction.js';
 import { Types } from 'mongoose';
 
 export async function statementSummary(accountId: Types.ObjectId, filters: any) {
-  const filter: any = { account: accountId };
-  if (filters.from) filter.createdAt = { ...filter.createdAt, $gte: new Date(filters.from) };
-  if (filters.to) filter.createdAt = { ...filter.createdAt, $lte: new Date(filters.to) };
-  if (filters.name) filter.name = new RegExp(String(filters.name), 'i');
-  const txs = await Transaction.find(filter).sort({ createdAt: -1 });
-  const income = txs.filter(t => t.type === 'income' || t.type === 'deposit' || t.type === 'transfer-in').reduce((s, t) => s + t.amount, 0);
-  const expenses = txs.filter(t => t.type === 'expense' || t.type === 'transfer-out').reduce((s, t) => s + t.amount, 0);
+  const match: any = { account: accountId };
+  if (filters.from) match.createdAt = { ...match.createdAt, $gte: new Date(filters.from) };
+  if (filters.to) match.createdAt = { ...match.createdAt, $lte: new Date(filters.to) };
+  if (filters.name) match.name = new RegExp(String(filters.name), 'i');
+
+  // Aggregate totals efficiently in MongoDB
+  const [totals] = await Transaction.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        income: {
+          $sum: {
+            $cond: [
+              { $in: ['$type', ['income', 'deposit', 'transfer-in']] },
+              '$amount',
+              0
+            ]
+          }
+        },
+        expenses: {
+          $sum: {
+            $cond: [
+              { $in: ['$type', ['expense', 'transfer-out']] },
+              '$amount',
+              0
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  const cats = await Transaction.aggregate([
+    { $match: match },
+    { $match: { category: { $type: 'string' } } },
+    {
+      $group: {
+        _id: '$category',
+        sum: {
+          $sum: {
+            $cond: [
+              { $in: ['$type', ['expense', 'transfer-out']] },
+              { $multiply: [-1, '$amount'] },
+              '$amount'
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
   const byCategory: Record<string, number> = {};
-  txs.forEach(t => { if (t.category) byCategory[t.category] = (byCategory[t.category] || 0) + (t.type === 'expense' ? -t.amount : t.amount); });
-  return { txs, income, expenses, byCategory };
+  for (const c of cats) byCategory[c._id] = c.sum;
+
+  const txs = await Transaction.find(match).sort({ createdAt: -1 }).lean();
+  return { txs, income: totals?.income || 0, expenses: totals?.expenses || 0, byCategory };
 }
 
 export async function generateStatementPdf(accountId: Types.ObjectId, filters: any) {

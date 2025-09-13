@@ -128,7 +128,7 @@ export async function transferBetweenAccounts(opts: {
     if (total > dailyMax) throw Object.assign(new Error('Daily transfer limit exceeded'), { status: 403 });
   }
 
-  const to = await Account.findOne({ sortCode: opts.toDetails.sortCode, accountNumber: opts.toDetails.accountNumber }).populate('user');
+  const to = await Account.findOne({ sortCode: opts.toDetails.sortCode, accountNumber: opts.toDetails.accountNumber });
   // Always record the outgoing; incoming only if receiver is in our system
   await createTransaction({
     accountId: from._id as any,

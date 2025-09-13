@@ -63,6 +63,6 @@ export async function listTransactions(req: Request, res: Response) {
   if (q) filter.$text = { $search: String(q) };
   if (min) filter.amount = { ...filter.amount, $gte: Number(min) };
   if (max) filter.amount = { ...filter.amount, $lte: Number(max) };
-  const txs = await Transaction.find(filter).sort({ createdAt: -1 });
+  const txs = await Transaction.find(filter).sort({ createdAt: -1 }).lean();
   res.json(txs);
 }
