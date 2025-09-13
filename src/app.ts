@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -54,12 +54,12 @@ csrfInit(app);
 
 app.use('/api', routes);
 app.use('/api/docs', swagger);
-app.get('/api/openapi.json', (_req, res) => {
+app.get('/api/openapi.json', (_req: Request, res: Response) => {
   // Delegate to swagger router that loaded YAML
   res.redirect(302, '/api/docs/json');
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
 
 app.use(notFoundHandler);
 app.use(errorHandler);
