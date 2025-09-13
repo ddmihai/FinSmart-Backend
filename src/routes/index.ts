@@ -12,6 +12,7 @@ import { forecastMonthEnd } from '../controllers/forecastController.js';
 import notifications from './notifications.js';
 import goals from './goals.js';
 import insights from './insights.js';
+import diagnostics from './diagnostics.js';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.get('/analytics/forecast', requireAuth, forecastMonthEnd);
 router.use('/notifications', notifications);
 router.use('/goals', goals);
 router.use('/insights', insights);
+router.use('/diagnostics', diagnostics);
 
 export default router;

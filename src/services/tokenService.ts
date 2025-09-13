@@ -1,14 +1,14 @@
-import jwt, { SignOptions, Secret } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { Types } from 'mongoose';
 
 export function signAccessToken(payload: object) {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET as Secret, { expiresIn: env.ACCESS_TOKEN_TTL } as SignOptions);
+  return (jwt as any).sign(payload, env.JWT_ACCESS_SECRET as any, { expiresIn: env.ACCESS_TOKEN_TTL } as any);
 }
 
 export async function issueRefreshToken(userId: Types.ObjectId) {
-  const token = jwt.sign({ sub: String(userId) }, env.JWT_REFRESH_SECRET as Secret, { expiresIn: env.REFRESH_TOKEN_TTL } as SignOptions);
+  const token = (jwt as any).sign({ sub: String(userId) }, env.JWT_REFRESH_SECRET as any, { expiresIn: env.REFRESH_TOKEN_TTL } as any);
   const decoded = jwt.decode(token) as { exp?: number } | null;
   const exp = decoded?.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   await RefreshToken.create({ user: userId, token, expiresAt: exp });
