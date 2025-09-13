@@ -17,11 +17,13 @@ export async function connectDB() {
     const refused = err?.message?.includes('ECONNREFUSED');
     if (!allowMemory || !refused) throw err;
     // Fallback to in-memory MongoDB for development
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore – dynamic import, types not needed in prod
     const { MongoMemoryServer } = await import('mongodb-memory-server');
     const mongod = await MongoMemoryServer.create();
     memoryServerUri = mongod.getUri();
-    process.env.MONGO_URI = memoryServerUri; // so Agenda uses the same
-    await mongoose.connect(memoryServerUri, { autoIndex: true });
+    if (memoryServerUri) process.env.MONGO_URI = memoryServerUri; // so Agenda uses the same
+    await mongoose.connect(memoryServerUri!, { autoIndex: true });
   }
 }
 

@@ -10,7 +10,7 @@ export function csrfInit(app: Application) {
     return;
   }
 
-  const csrfProtection = csurf({ cookie: { httpOnly: true, sameSite: 'lax' } });
+  const csrfProtection = csurf({ cookie: { httpOnly: true, sameSite: 'none', secure: env.COOKIE_SECURE } });
 
   const skipPaths = new Set<string>([
     '/api/auth/login',

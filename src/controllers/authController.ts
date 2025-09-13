@@ -10,9 +10,9 @@ import { createDefaultAccountForUser } from '../services/accountService.js';
 function setRefreshCookie(res: Response, token: string) {
   const options: any = {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     secure: env.COOKIE_SECURE,
-    path: '/api/auth/refresh'
+    path: '/'
   };
   // Only set domain if provided and not localhost; otherwise use host-only cookie
   if (env.COOKIE_DOMAIN && env.COOKIE_DOMAIN !== 'localhost') {
